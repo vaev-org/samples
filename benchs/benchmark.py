@@ -1,3 +1,37 @@
+#!/usr/bin/env python3
+
+import os
+import psutil
+import subprocess
+import time
+import matplotlib.pyplot as plt
+
+
+def generateDocumentSimple(tableSize: int, out: str) -> None:
+    """
+    Generates a simple HTML file with a table containing `tableSize` rows.
+    """
+    with open(out, "w") as f:
+        f.write("<html>\n")
+        f.write("<head><title>Performance Test Document</title></head>\n")
+        f.write("<body>\n")
+        f.write("<h1>Table Test ({} rows)</h1>\n".format(tableSize))
+        f.write("<table border='1'>\n")
+        for i in range(tableSize):
+            f.write("<tr><td>Row {}</td><td>Some data</td></tr>\n".format(i + 1))
+        f.write("</table>\n")
+        f.write("</body>\n")
+        f.write("</html>\n")
+
+
+def generateDoculentLedger(tableSize: int, out: str) -> None:
+    """
+    Generates a simple HTML file with a table containing `tableSize` rows.
+    """
+
+    tableSize = tableSize // 100
+    with open(out, "w") as f:
+        f.write("""
 <html xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
@@ -82,6 +116,10 @@
 
 
             <tbody>
+""")
+
+        for i in range(tableSize):
+            f.write("""
 
 
             <tr name="pdf_export_main_table_body_lines_tr" class="o_line_level_1 o_fw_bold">
@@ -4740,9 +4778,10 @@
                 </td>
 
             </tr>
+                    """)
 
-
-            </tbody>
+        f.write("""
+                            </tbody>
         </table>
     </div>
 
@@ -4753,3 +4792,138 @@
 </body>
 
 </html>
+                """)
+
+
+generateDocument = generateDoculentLedger
+useLogScale = True
+
+
+def measure_command_usage(command):
+    """
+    Spawns a process via psutil, measures the time and peak memory usage.
+    It attempts to include child processes in the memory measurement.
+    Returns (elapsed_time_in_seconds, peak_memory_in_MB).
+    """
+    # Start time
+    start_time = time.time()
+
+    # Launch process
+    process = psutil.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    peak_memory = 0
+
+    # While the process is running, poll memory usage
+    while True:
+        if process.poll() is not None:
+            # The process has finished
+            break
+
+        # Get memory usage of the process and all its children
+        try:
+            mem_info = process.memory_info().rss
+            for child in process.children(recursive=True):
+                mem_info += child.memory_info().rss
+            if mem_info > peak_memory:
+                peak_memory = mem_info
+        except psutil.NoSuchProcess:
+            pass
+
+        time.sleep(0.05)  # Poll at 50ms intervals
+
+    # Final check in case memory peaked right before the loop ended
+    try:
+        mem_info = process.memory_info().rss
+        for child in process.children(recursive=True):
+            mem_info += child.memory_info().rss
+        if mem_info > peak_memory:
+            peak_memory = mem_info
+    except psutil.NoSuchProcess:
+        pass
+
+    # End time
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    # Convert peak memory from bytes to MB
+    peak_memory_mb = peak_memory / (1024.0 * 1024.0)
+
+    return elapsed_time, peak_memory_mb
+
+
+def main():
+    # Powers of 10 up to 1,000,000
+    table_sizes = [
+        10**i for i in range(1, 5)
+    ]  # [10, 100, 1000, 10000, 100000, 1000000]
+
+    pm_times = []
+    pm_mems = []
+    wk_times = []
+    wk_mems = []
+
+    for size in table_sizes:
+        html_file = f"test_{size}.html"
+        print(f"Generating HTML document with {size} rows...")
+        generateDocument(size, html_file)
+
+        # Measure paper-muncher
+        pm_cmd = [
+            "paper-muncher",
+            "print",
+            html_file,
+            "-o",
+            "/dev/null",
+            "--scale",
+            "0.65x",
+        ]
+        print(f"Measuring paper-muncher performance for tableSize={size}...")
+        t_pm, m_pm = measure_command_usage(pm_cmd)
+        pm_times.append(t_pm)
+        pm_mems.append(m_pm)
+
+        # Measure wkhtmltopdf
+        wk_cmd = ["wkhtmltopdf", "--enable-local-file-access", html_file, "/dev/null"]
+        print(f"Measuring wkhtmltopdf performance for tableSize={size}...")
+        t_wk, m_wk = measure_command_usage(wk_cmd)
+        wk_times.append(t_wk)
+        wk_mems.append(m_wk)
+
+        # Clean up HTML file if you want
+        os.remove(html_file)
+
+    # --- Plot results ---
+    fig, (ax_time, ax_mem) = plt.subplots(1, 2, figsize=(12, 6))
+
+    # Time plot
+    ax_time.plot(table_sizes, pm_times, marker="o", label="paper-muncher (time)")
+    ax_time.plot(table_sizes, wk_times, marker="o", label="wkhtmltopdf (time)")
+    if useLogScale:
+        ax_time.set_xscale("log")
+        ax_time.set_xlabel("Table Size (log scale)")
+    else:
+        ax_time.set_xlabel("Table Size")
+    ax_time.set_ylabel("Time (seconds)")
+    ax_time.set_title("Conversion Time")
+    ax_time.legend()
+    ax_time.grid(True)
+
+    # Memory plot
+    ax_mem.plot(table_sizes, pm_mems, marker="o", label="paper-muncher (memory)")
+    ax_mem.plot(table_sizes, wk_mems, marker="o", label="wkhtmltopdf (memory)")
+    if useLogScale:
+        ax_mem.set_xscale("log")
+        ax_mem.set_xlabel("Table Size (log scale)")
+    else:
+        ax_mem.set_xlabel("Table Size")
+    ax_mem.set_ylabel("Peak Memory (MB)")
+    ax_mem.set_title("Peak Memory Usage")
+    ax_mem.legend()
+    ax_mem.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
