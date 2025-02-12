@@ -4854,16 +4854,19 @@ def measure_command_usage(command):
 def main():
     # Powers of 10 up to 1,000,000
     table_sizes = [
-        10**i for i in range(1, 5)
+        2**i for i in range(1, 14)
     ]  # [10, 100, 1000, 10000, 100000, 1000000]
 
     pm_times = []
     pm_mems = []
     wk_times = []
     wk_mems = []
+    gc_times = []
+    gc_mems = []
 
     for size in table_sizes:
         html_file = f"test_{size}.html"
+        print("")
         print(f"Generating HTML document with {size} rows...")
         generateDocument(size, html_file)
 
@@ -4881,6 +4884,7 @@ def main():
         t_pm, m_pm = measure_command_usage(pm_cmd)
         pm_times.append(t_pm)
         pm_mems.append(m_pm)
+        print(f"paper-muncher: time={t_pm:.2f}s, memory={m_pm:.2f}MB")
 
         # Measure wkhtmltopdf
         wk_cmd = ["wkhtmltopdf", "--enable-local-file-access", html_file, "/dev/null"]
@@ -4888,6 +4892,21 @@ def main():
         t_wk, m_wk = measure_command_usage(wk_cmd)
         wk_times.append(t_wk)
         wk_mems.append(m_wk)
+        print(f"wkhtmltopdf: time={t_wk:.2f}s, memory={m_wk:.2f}MB")
+
+        # Measure Google Chrome
+        gc_cmd = [
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "--headless",
+            "--disable-gpu",
+            "--print-to-pdf=/dev/null",
+            html_file,
+        ]
+        print(f"Measuring Google Chrome performance for tableSize={size}...")
+        t_gc, m_gc = measure_command_usage(gc_cmd)
+        gc_times.append(t_gc)
+        gc_mems.append(m_gc)
+        print(f"Google Chrome: time={t_gc:.2f}s, memory={m_gc:.2f}MB")
 
         # Clean up HTML file if you want
         os.remove(html_file)
@@ -4898,6 +4917,7 @@ def main():
     # Time plot
     ax_time.plot(table_sizes, pm_times, marker="o", label="paper-muncher (time)")
     ax_time.plot(table_sizes, wk_times, marker="o", label="wkhtmltopdf (time)")
+    ax_time.plot(table_sizes, gc_times, marker="o", label="Google Chrome (time)")
     if useLogScale:
         ax_time.set_xscale("log")
         ax_time.set_xlabel("Table Size (log scale)")
@@ -4911,6 +4931,7 @@ def main():
     # Memory plot
     ax_mem.plot(table_sizes, pm_mems, marker="o", label="paper-muncher (memory)")
     ax_mem.plot(table_sizes, wk_mems, marker="o", label="wkhtmltopdf (memory)")
+    ax_mem.plot(table_sizes, gc_mems, marker="o", label="Google Chrome (memory)")
     if useLogScale:
         ax_mem.set_xscale("log")
         ax_mem.set_xlabel("Table Size (log scale)")
