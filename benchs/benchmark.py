@@ -10,7 +10,7 @@ import importlib
 import importlib.util
 
 
-useLogScale = True
+useLogScale = False
 template = "general-ledger"
 
 
@@ -134,14 +134,11 @@ class WeasyPrint(Engine):
         return ["weasyprint", input, "/dev/null"]
 
 
-ENGINES = [PaperMuncher(), WkHtmlToPdf(), GoogleChrome(), WeasyPrint()]
+ENGINES = [PaperMuncher()]
 
 
 def main() -> None:
-    # Powers of 10 up to 1,000,000
-    table_sizes = [
-        2**i for i in range(1, 14)
-    ]  # [10, 100, 1000, 10000, 100000, 1000000]
+    table_sizes = [2**i for i in range(8, 21)]
 
     times: list[dict[str, float]] = []
     mems: list[dict[str, float]] = []
