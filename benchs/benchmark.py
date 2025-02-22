@@ -8,15 +8,16 @@ import time
 import matplotlib.pyplot as plt
 import importlib
 import importlib.util
+import logging
 
 
 useLogScale = False
 template = "general-ledger"
-
+_logger = logging.getLogger(__name__)
 
 # import the python file the template render function
 path = "templates/" + template + ".py"
-print(f"Using template: {path}")
+_logger.info(f"Using template: {path}")
 spec = importlib.util.spec_from_file_location("render", path)
 if spec is None:
     raise ImportError(f"Could not import {path}")
@@ -118,7 +119,7 @@ class GoogleChrome(Engine):
 
     def command(self, input) -> list[str]:
         return [
-            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "google-chrome-stable",
             "--headless",
             "--disable-gpu",
             "--print-to-pdf=/dev/null",
@@ -134,19 +135,25 @@ class WeasyPrint(Engine):
         return ["weasyprint", input, "/dev/null"]
 
 
-ENGINES = [PaperMuncher()]
+ENGINES = [
+    PaperMuncher(),
+    WkHtmlToPdf(),
+    GoogleChrome(),
+]
 
 
 def main() -> None:
-    table_sizes = [2**i for i in range(8, 21)]
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
+
+    table_sizes = [2**i for i in range(8, 14)]
 
     times: list[dict[str, float]] = []
     mems: list[dict[str, float]] = []
 
     for size in table_sizes:
-        html_file = f"test_{size}.xhtml"
-        print("")
-        print(f"Generating HTML document with {size} rows...")
+        html_file = f"bench_{size}.xhtml"
+        _logger.info("")
+        _logger.info(f"Generating HTML document with {size} rows...")
         with open(html_file, "w") as f:
             render(size, f)
 
@@ -154,14 +161,16 @@ def main() -> None:
         mems.append({})
 
         for engine in ENGINES:
-            print(f"Measuring {engine.name()} performance for tableSize={size}...")
+            _logger.info(
+                f"Measuring {engine.name()} performance for tableSize={size}..."
+            )
             t, m = measure_command_usage(engine.command(html_file))
-            print(f"{engine.name()}: time={t:.2f}s, memory={m:.2f}MB")
+            _logger.info(f"{engine.name()}: time={t:.2f}s, memory={m:.2f}MB")
             times[-1][engine.name()] = t
             mems[-1][engine.name()] = m
 
         # Clean up HTML file if you want
-        os.remove(html_file)
+        # os.remove(html_file)
 
     # --- Plot results ---
     fig, (ax_time, ax_mem) = plt.subplots(1, 2, figsize=(12, 6))
