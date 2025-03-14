@@ -13,7 +13,7 @@ def render(size: int, f: IO):
 
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-    <link type="text/css" rel="stylesheet" href="template/general-ledger.css"/>
+    <link type="text/css" rel="stylesheet" href="templates/general-ledger.css"/>
 </head>
 
 <body dir="ltr">
@@ -146,7 +146,7 @@ def render(size: int, f: IO):
                     <span class=""></span>
                 </td>
                 <td class="o_cell_td">
-
+                
                     <span class=""></span>
                 </td>
                 <td class="o_cell_td">

@@ -11,7 +11,7 @@ import importlib.util
 import logging
 
 
-useLogScale = False
+useLogScale = True
 template = "general-ledger"
 _logger = logging.getLogger(__name__)
 
@@ -105,12 +105,40 @@ class PaperMuncher(Engine):
         ]
 
 
+class Prince(Engine):
+    def name(self) -> str:
+        return "prince"
+
+    def command(self, input) -> list[str]:
+        return [
+            "taskset",
+            "-c",
+            "0",
+            "prince",
+            input,
+            "-o",
+            "/dev/null",
+        ]
+
+
 class WkHtmlToPdf(Engine):
     def name(self) -> str:
         return "wkhtmltopdf"
 
     def command(self, input) -> list[str]:
-        return ["wkhtmltopdf", "--enable-local-file-access", input, "/dev/null"]
+        return [
+            "wkhtmltopdf",
+            "--quiet",
+            "--enable-local-file-access",
+            "--footer-html",
+            "templates/footer.html",
+            "--header-html",
+            "templates/header.html",
+            "--javascript-delay",
+            "1000",
+            input,
+            "/dev/null",
+        ]
 
 
 class GoogleChrome(Engine):
@@ -138,14 +166,16 @@ class WeasyPrint(Engine):
 ENGINES = [
     PaperMuncher(),
     WkHtmlToPdf(),
+    Prince(),
     GoogleChrome(),
+    WeasyPrint(),
 ]
 
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
-    table_sizes = [2**i for i in range(8, 14)]
+    table_sizes = [2**i for i in range(1, 12)]
 
     times: list[dict[str, float]] = []
     mems: list[dict[str, float]] = []
@@ -170,7 +200,7 @@ def main() -> None:
             mems[-1][engine.name()] = m
 
         # Clean up HTML file if you want
-        # os.remove(html_file)
+        os.remove(html_file)
 
     # --- Plot results ---
     fig, (ax_time, ax_mem) = plt.subplots(1, 2, figsize=(12, 6))
