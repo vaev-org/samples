@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville&family=Inter:wght@700&display=swap');
+
+@page {
+    size: A4;
+    margin: 2.5cm 2cm 3cm 2cm;
+
+    @bottom-center {
+        content: "Page " counter(page);
+        font-size: 9pt;
+        font-style: italic;
+        color: #666;
+    }
+}
+
+@page: first {
+    margin-top: 4cm;
+
+    @bottom-center {
+        content: none;
+    }
+}
+
+body {
+    font-family: 'Libre Baskerville', serif;
+    line-height: 1.6;
+    max-width: 60ch;
+    font-size: 11pt;
+    margin: auto;
+}
+
+h1 {
+    font-family: 'Inter', sans-serif;
+    font-size: 2rem;
+    margin-bottom: 0;
+}
+
+.subtitle {
+    font-style: italic;
+    color: #666;
+    margin-top: 0.2rem;
+    margin-bottom: 2rem;
+}
+
+hr {
+    border: none;
+    border-top: 1pt solid #aaa;
+    margin: 2rem 0;
+}
+
+blockquote {
+    font-style: italic;
+    border-left: 4pt solid #ccc;
+    padding-left: 1rem;
+    margin: 2rem 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+    font-size: 10pt;
+}
+
+th,
+td {
+    border: 0.5pt solid #ccc;
+    padding: 0.5rem;
+    text-align: left;
+}
+
+thead th {
+    background-color: #f8f8f8;
+    font-weight: bold;
+}
+
+footer {
+    text-align: center;
+    margin-top: 4rem;
+    font-style: italic;
+    font-size: 9pt;
+}
