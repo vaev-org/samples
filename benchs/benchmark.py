@@ -9,14 +9,32 @@ import matplotlib.pyplot as plt
 import importlib
 import importlib.util
 import logging
+import sys
+
+from os.path import abspath, dirname
+#todo
+# accept an optional argument --output=log / --output=gui
+# save a json
+PATH = dirname(abspath(__file__))
 
 
 useLogScale = True
 template = "general-ledger"
 _logger = logging.getLogger(__name__)
 
+
+# Parsing arguments
+# Arg list:
+# '--output': defines the output to either log or gui (default)
+
+# Syntax:
+# python benchmark.py --arg=value
+
+optionalArg=sys.argv[1][2:].split("=")
+optionalArg = {"name":optionalArg[0],"value":optionalArg[1]}
+
 # import the python file the template render function
-path = "templates/" + template + ".py"
+path = PATH + "/templates/" + template + ".py"
 _logger.info(f"Using template: {path}")
 spec = importlib.util.spec_from_file_location("render", path)
 if spec is None:
@@ -59,6 +77,11 @@ def measure_command_usage(command):
         except psutil.NoSuchProcess:
             pass
 
+
+        if time.time() - start_time > 300:
+            _logger.info("Process took too long, killing it.")
+            process.kill()
+            break
         time.sleep(0.05)  # Poll at 50ms intervals
 
     # Final check in case memory peaked right before the loop ended
@@ -175,10 +198,12 @@ ENGINES = [
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
-    table_sizes = [2**i for i in range(1, 12)]
+    table_sizes = [2**i for i in range(1, 18)]
 
     times: list[dict[str, float]] = []
     mems: list[dict[str, float]] = []
+    DNFs = []
+
 
     for size in table_sizes:
         html_file = f"bench_{size}.xhtml"
@@ -191,57 +216,89 @@ def main() -> None:
         mems.append({})
 
         for engine in ENGINES:
+            if engine in DNFs:
+                _logger.info(f"Skipping {engine.name()} due to previous DNF.")
+                continue
             _logger.info(
                 f"Measuring {engine.name()} performance for tableSize={size}..."
             )
             t, m = measure_command_usage(engine.command(html_file))
             _logger.info(f"{engine.name()}: time={t:.2f}s, memory={m:.2f}MB")
+            if t > 150:
+                _logger.info(
+                    f"Process took too long ({t:.2f}s), stopping further measurements for {engine.name()}."
+                )
+                DNFs.append(engine)
+            elif m > 8000:
+                _logger.info(
+                    f"Process took too much memory ({m:.2f}MB), stopping further measurements for {engine.name()}."
+                )
+                DNFs.append(engine)
             times[-1][engine.name()] = t
             mems[-1][engine.name()] = m
 
         # Clean up HTML file if you want
         os.remove(html_file)
 
-    # --- Plot results ---
-    fig, (ax_time, ax_mem) = plt.subplots(1, 2, figsize=(12, 6))
-    fig.suptitle(f"HTML to PDF Conversion Performance ({template} template)")
-    # Time plot
-    for engine in ENGINES:
-        engine_times = [t[engine.name()] for t in times]
-        ax_time.plot(table_sizes, engine_times, marker="o", label=engine.name())
-    if useLogScale:
-        ax_time.set_xscale("log")
-        ax_time.set_xlabel("Table Size (log scale)")
-        ax_time.set_yscale("log")
-        ax_time.set_ylabel("Time (seconds, log scale)")
+
+    if optionalArg["name"] == "output" and optionalArg["value"] == "log":
+
+        structured = "[\n"
+        for engine in ENGINES:
+            engine_mems = [m[engine.name()] for m in mems]
+            engine_times = [t[engine.name()] for t in times]
+
+            structured += '{"name":' + f'"{engine.name()}", "memory": {engine_mems}, "time": {engine_times}' + "}"
+            if engine != ENGINES[-1]:
+                structured += ",\n"
+
+        structured += "\n]"
+
+        fd = open("./logs/perf/log.json",'w+')
+        fd.write(structured)
+        fd.close()
     else:
-        ax_time.set_xlabel("Table Size")
-        ax_time.set_ylabel("Time (seconds)")
+        # --- Plot results ---
+        fig, (ax_time, ax_mem) = plt.subplots(1, 2, figsize=(12, 6))
+        fig.suptitle(f"HTML to PDF Conversion Performance ({template} template)")
+        # Time plot
+        for engine in ENGINES:
+            engine_times = [t[engine.name()] for t in times]
+            ax_time.plot(table_sizes, engine_times, marker="o", label=engine.name())
+        if useLogScale:
+            ax_time.set_xscale("log")
+            ax_time.set_xlabel("Table Size (log scale)")
+            ax_time.set_yscale("log")
+            ax_time.set_ylabel("Time (seconds, log scale)")
+        else:
+            ax_time.set_xlabel("Table Size")
+            ax_time.set_ylabel("Time (seconds)")
 
-    ax_time.set_title("Conversion Time")
-    ax_time.legend()
-    ax_time.grid(True)
+        ax_time.set_title("Conversion Time")
+        ax_time.legend()
+        ax_time.grid(True)
 
-    # Memory plot
-    for engine in ENGINES:
-        engine_mems = [m[engine.name()] for m in mems]
-        ax_mem.plot(table_sizes, engine_mems, marker="o", label=engine.name())
-    if useLogScale:
-        ax_mem.set_xscale("log")
-        ax_mem.set_xlabel("Table Size (log scale)")
-        ax_mem.set_yscale("log")
-        ax_mem.set_ylabel("Peak Memory (MB, log scale)")
-    else:
-        ax_mem.set_xlabel("Table Size")
-        ax_mem.set_ylabel("Peak Memory (MB)")
+        # Memory plot
+        for engine in ENGINES:
+            engine_mems = [m[engine.name()] for m in mems]
+            ax_mem.plot(table_sizes, engine_mems, marker="o", label=engine.name())
+        if useLogScale:
+            ax_mem.set_xscale("log")
+            ax_mem.set_xlabel("Table Size (log scale)")
+            ax_mem.set_yscale("log")
+            ax_mem.set_ylabel("Peak Memory (MB, log scale)")
+        else:
+            ax_mem.set_xlabel("Table Size")
+            ax_mem.set_ylabel("Peak Memory (MB)")
 
-    ax_mem.set_title("Peak Memory Usage")
-    ax_mem.legend()
-    ax_mem.grid(True)
+        ax_mem.set_title("Peak Memory Usage")
+        ax_mem.legend()
+        ax_mem.grid(True)
 
-    plt.tight_layout()
-    plt.show()
+        plt.tight_layout()
+        plt.show()
 
 
 if __name__ == "__main__":
     main()
+
