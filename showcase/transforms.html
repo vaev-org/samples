@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang=en>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width, initial-scale=1">
+<style>
+  body {
+    padding: 0;
+    margin: 0
+  }
+
+  .container {
+    display: grid;
+    grid-template-columns: 200px 100px;
+    gap: 20px
+  }
+
+  .example {
+    position: relative;
+    margin: 0 2em 4em 5em
+  }
+
+  .box {
+    display: inline-block;
+    width: 3em;
+    height: 3em;
+    border: solid 1px;
+    background-color: palegreen
+  }
+
+  .original {
+    position: absolute;
+    left: 0;
+    opacity: 20%
+  }
+
+  .box1 {
+    transform: none
+  }
+
+  .box2 {
+    transform: rotate(30deg)
+  }
+
+  .box3 {
+    transform: rotate(30deg);
+    transform-origin: 0 0
+  }
+
+  .box4 {
+    transform: rotate(30deg);
+    transform-origin: 100% 100%
+  }
+
+  .box5 {
+    transform: rotate(30deg);
+    transform-origin: -1em -3em
+  }
+
+  .box6 {
+    transform: scale(1.7)
+  }
+
+  .box7 {
+    transform: scale(1.7);
+    transform-origin: 0 0
+  }
+
+  .box8 {
+    transform: scale(1.7);
+    transform-origin: 100% -30%
+  }
+
+  .box9 {
+    transform: skewX(50deg);
+    transform-origin: 100% -30%
+  }
+
+  .box10 {
+    transform: skewY(50deg);
+    transform-origin: 100% -30%
+  }
+</style>
+</head>
+
+<body>
+  <div class=container>
+    <div class=example>
+      <div class="box box1">&nbsp;</div>
+      <div class="box original">&nbsp;</div>
+    </div>
+    <pre>transform: none;
+  </pre>
+    <div class=example>
+      <div class="box box2">&nbsp;</div>
+      <div class="box original">&nbsp;</div>
+    </div>
+    <pre>transform: rotate(30deg);
+  </pre>
+    <div class=example>
+      <div class="box box3">&nbsp;</div>
+      <div class="box original">&nbsp;</div>
+    </div>
+    <pre>transform: rotate(30deg);
+transform-origin: 0 0;
+  </pre>
+    <div class=example>
+      <div class="box box4">&nbsp;</div>
+      <div class="box original">&nbsp;</div>
+    </div>
+    <pre>transform: rotate(30deg);
+transform-origin: 100% 100%;
+  </pre>
+    <div class=example>
+      <div class="box box5">&nbsp;</div>
+      <div class="box original">&nbsp;</div>
+    </div>
+    <pre>transform: rotate(30deg);
+transform-origin: -1em -3em;
+  </pre>
+    <div class=example>
+      <div class="box box6">&nbsp;</div>
+      <div class="box original">&nbsp;</div>
+    </div>
+    <pre>transform: scale(1.7);
+  </pre>
+    <div class=example>
+      <div class="box box7">&nbsp;</div>
+      <div class="box original">&nbsp;</div>
+    </div>
+    <pre>transform: scale(1.7);
+transform-origin: 0 0;
+  </pre>
+    <div class=example>
+      <div class="box box8">&nbsp;</div>
+      <div class="box original">&nbsp;</div>
+    </div>
+    <pre>transform: scale(1.7);
+transform-origin: 100% -30%;
+  </pre>
+    <div class=example>
+      <div class="box box9">&nbsp;</div>
+      <div class="box original">&nbsp;</div>
+    </div>
+    <pre>transform: skewX(50deg);
+transform-origin: 100% -30%;
+  </pre>
+    <div class=example>
+      <div class="box box10">&nbsp;</div>
+      <div class="box original">&nbsp;</div>
+    </div>
+    <pre>transform: skewY(50deg);
+transform-origin: 100% -30%;
+  </pre>
+  </div>
