@@ -96,6 +96,7 @@ class PaperMuncher(Engine):
     def command(self, input) -> list[str]:
         return [
             "paper-muncher",
+            "--unsecure",
             "print",
             input,
             "-o",
@@ -163,19 +164,21 @@ class WeasyPrint(Engine):
         return ["weasyprint", input, "/dev/null"]
 
 
-ENGINES = [
-    PaperMuncher(),
-    WkHtmlToPdf(),
-    Prince(),
-    GoogleChrome(),
-    WeasyPrint(),
-]
+class Plutoprint(Engine):
+    def name(self) -> str:
+        return "plutoprint"
+
+    def command(self, input) -> list[str]:
+        return ["plutoprint", input, "/dev/null"]
+
+
+ENGINES = [WkHtmlToPdf(), Plutoprint(), PaperMuncher()]
 
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
-    table_sizes = [2**i for i in range(1, 12)]
+    table_sizes = [2**i for i in range(6, 14)]
 
     times: list[dict[str, float]] = []
     mems: list[dict[str, float]] = []
