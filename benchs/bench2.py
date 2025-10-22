@@ -12,12 +12,12 @@ import logging
 import sys
 import numpy as np
 
-
 from os.path import abspath, dirname
 #todo
 # accept an optional argument --output=log / --output=gui
 # save a json
 PATH = dirname(abspath(__file__))
+
 
 useLogScale = True
 template = "general-ledger"
@@ -30,6 +30,7 @@ _logger = logging.getLogger(__name__)
 
 # Syntax:
 # python benchmark.py --arg=value
+
 optionalArg=sys.argv[1][2:].split("=")
 optionalArg = {"name":optionalArg[0],"value":optionalArg[1]}
 
@@ -77,6 +78,11 @@ def measure_command_usage(command):
         except psutil.NoSuchProcess:
             pass
 
+
+        if time.time() - start_time > 300:
+            _logger.info("Process took too long, killing it.")
+            process.kill()
+            break
         time.sleep(0.05)  # Poll at 50ms intervals
 
     # Final check in case memory peaked right before the loop ended
@@ -114,7 +120,6 @@ class PaperMuncher(Engine):
     def command(self, input) -> list[str]:
         return [
             "paper-muncher",
-            "--unsecure",
             "print",
             input,
             "-o",
@@ -182,30 +187,31 @@ class WeasyPrint(Engine):
         return ["weasyprint", input, "/dev/null"]
 
 
-class Plutoprint(Engine):
-    def name(self) -> str:
-        return "plutoprint"
+# ENGINES = [
+#     PaperMuncher(),
+#     WkHtmlToPdf(),
+#     Prince(),
+#     GoogleChrome(),
+#     WeasyPrint(),
+# ]
 
-    def command(self, input) -> list[str]:
-        return ["plutoprint", input, "/dev/null"]
 
-
-ENGINES = [
+ENGINES = {
     PaperMuncher(),
     WkHtmlToPdf(),
     GoogleChrome(),
     WeasyPrint(),
-]
-
+}
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
-    table_sizes = table_sizes = [2**i for i in range(1, 17)]
+    table_sizes = [2**i for i in range(1, 18)]
 
     times: list[dict[str, float]] = []
     mems: list[dict[str, float]] = []
     DNFs = []
+
 
     for size in table_sizes:
         html_file = f"bench_{size}.xhtml"
@@ -226,7 +232,7 @@ def main() -> None:
             )
             t, m = measure_command_usage(engine.command(html_file))
             _logger.info(f"{engine.name()}: time={t:.2f}s, memory={m:.2f}MB")
-            if t > 120:
+            if t > 150:
                 _logger.info(
                     f"Process took too long ({t:.2f}s), stopping further measurements for {engine.name()}."
                 )
@@ -241,7 +247,6 @@ def main() -> None:
 
         # Clean up HTML file if you want
         os.remove(html_file)
-
 
 
     if optionalArg["name"] == "output" and optionalArg["value"] == "log":
@@ -300,6 +305,7 @@ def main() -> None:
 
         plt.tight_layout()
         plt.show()
+
 
 def filterData(engine, set, table_sizes=None):
     res = []
