@@ -96,8 +96,6 @@ class PaperMuncher(Engine):
     def command(self, input) -> list[str]:
         return [
             "paper-muncher",
-            "--unsecure",
-            "print",
             input,
             "-o",
             "/dev/null",
@@ -178,7 +176,7 @@ ENGINES = [WkHtmlToPdf(), Plutoprint(), PaperMuncher()]
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
-    table_sizes = [2**i for i in range(6, 14)]
+    table_sizes = [2**i for i in range(6, 16)]
 
     times: list[dict[str, float]] = []
     mems: list[dict[str, float]] = []
