@@ -90,12 +90,20 @@ class Engine:
 
 
 class PaperMuncher(Engine):
+    _path: str
+    _nick: str
+
+    def __init__(self, path: str, nick: str):
+        self._path = path
+        self._nick = nick
+
+
     def name(self) -> str:
-        return "paper-muncher"
+        return f"paper-muncher ({self._nick})"
 
     def command(self, input) -> list[str]:
         return [
-            "paper-muncher",
+            self._path,
             input,
             "-o",
             "/dev/null",
@@ -170,13 +178,15 @@ class Plutoprint(Engine):
         return ["plutoprint", input, "/dev/null"]
 
 
-ENGINES = [WkHtmlToPdf(), Plutoprint(), PaperMuncher()]
+ENGINES = [
+    PaperMuncher("/home/smnx/.local/opt/paper-muncher/bin/paper-muncher", "0.8"),
+]
 
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
-    table_sizes = [2**i for i in range(6, 16)]
+    table_sizes = [2**i for i in range(16, 21)]
 
     times: list[dict[str, float]] = []
     mems: list[dict[str, float]] = []
@@ -241,6 +251,9 @@ def main() -> None:
     ax_mem.grid(True)
 
     plt.tight_layout()
+
+    plt.savefig("bench.png")
+
     plt.show()
 
 
