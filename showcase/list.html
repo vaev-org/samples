@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1>Showcase List</h1>
+    <p>Show case support for HTML list support in vaev</p>
+    <ul>
+        <li>Item 1</li>
+        <li>Item 2</li>
+        <li>
+            Item 3
+            <ul>
+                <li>Item 1</li>
+                <li>Item 2</li>
+                <li>
+                    Item 3
+                    <ul>
+                        <li>
+                            Item 1
+                            <ul>
+                                <li>Item 1<ul>
+                                        <li>Item 1</li>
+                                        <li>Item 2</li>
+                                        <li>Item 3</li>
+                                    </ul>
+                                </li>
+                                <li>Item 2</li>
+                                <li>Item 3</li>
+                            </ul>
+                        </li>
+                        <li>Item 2</li>
+                        <li>Item 3</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <ol>
+        <li>Item 1</li>
+        <li>Item 2</li>
+        <li>Item 3 <ol>
+                <li>Item 1</li>
+                <li>Item 2</li>
+                <li>Item 3</li>
+            </ol>
+        </li>
+        <li>Item 2</li>
+
+        <li>Item 2</li>
+
+    </ol>
+
+    <div class="toggled">
+        <div class="toggled">
+            <div class="toggled">
+                <div class="toggled">
+                    <p>Hello World</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<style>
+    .toggled {
+        background-color: toggle(red, green, blue);
+        margin: 10px;
+        padding: 10px;
+    }
+</style>
+
+</html>
